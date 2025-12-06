@@ -5,21 +5,21 @@ import qiskit as qk
 import MatrixProcedures as mp
 import QAlgs as qa
 import QWOps as qw
-
+from qiskit.circuit.library import Initialize
 tstart=time.time()
 sim = qk.BasicAer.get_backend('statevector_simulator')
 
 outfile = open('./output.txt','w')
 
 # the choice of nq_phase affects the accuracy of QPE
-nq_phase=6
+nq_phase=3
 MM=2
 
 # initialize the matrix equation, and prepare it for the quantum procedure
 print("Building system... ",end='')
 sys.stdout.flush()
 msystem=mp.MatrixSystem(M=MM,expand=False)
-msystem.RandInit(D=2)
+msystem.MoMInit()
 msystem.PrepSystem()
 print("Done.")
 msystem.PrintMatrix()
@@ -27,7 +27,7 @@ msystem.PrintMatrix()
 # construct the top-level operators
 qw_ops=qw.Operators(msystem)
 print(msystem.b)
-init = qk.extensions.Initialize(msystem.b).copy(name='Init')
+init = Initialize(msystem.b).copy(name='Init')
 print()
 print("Initializing...")
 sys.stdout.flush()

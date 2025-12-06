@@ -6,17 +6,18 @@ import QAlgs as qa
 import QWOps as qw
 import qiskit.circuit.library as clib
 from qiskit import *
-
+from qiskit.circuit.library import Initialize
 EPSILON=1e-10
 shots=4096
-start_op=80
-stop_op=130
+start_op=0
+stop_op=119
 
-IBMQ.enable_account('')
-provider=IBMQ.get_provider(hub='ibm-q-research-2', group='uni-manitoba-1')
+#IBMQ.enable_account('')
+#provider=IBMQ.get_provider(hub='ibm-q-research-2', group='uni-manitoba-1')
 
 back1 = qk.BasicAer.get_backend('statevector_simulator')
-back2 = provider.get_backend('ibmq_jakarta')
+back2 = qk.BasicAer.get_backend('statevector_simulator')
+#back2 = provider.get_backend('ibmq_jakarta')
 if(start_op==0):
     f = open('./job_data.dat', 'w')
 else:
@@ -37,7 +38,7 @@ print("Done.")
 C=0.9999999998
 
 # get the first initializer
-init = qk.extensions.Initialize(msystem.b).copy(name='Init')
+init = Initialize(msystem.b).copy(name='Init')
 
 # initialize the quantum system itself
 reg_phase=qk.QuantumRegister(nq_phase)
@@ -81,7 +82,7 @@ def run_op(circ_init, op, reg_work, reg_all, reg_class):
         print('Operator %d skipped.'%(l))
     
     l=l+1
-    return qk.extensions.Initialize(statevector)
+    return Initialize(statevector)
 
 # initial T
 circ_init=qk.QuantumCircuit(reg_a_hhl,reg_r2a,reg_r2,reg_r1a,reg_r1,reg_phase,reg_class)
