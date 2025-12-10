@@ -37,14 +37,14 @@ C=0.9999999998
 init = Initialize(msystem.b).copy(name='Init')
 
 # initialize the quantum system itself
-reg_phase=qk.QuantumRegister(nq_phase)
-reg_r1=qk.QuantumRegister(msystem.n)
-reg_r1w=qk.QuantumRegister(msystem.n)
-reg_r1a=qk.QuantumRegister(1)
-reg_r2=qk.QuantumRegister(msystem.n)
-reg_r2w=qk.QuantumRegister(msystem.n)
-reg_r2a=qk.QuantumRegister(1)
-reg_a_hhl=qk.QuantumRegister(1)
+reg_phase=qk.QuantumRegister(nq_phase,"phase")
+reg_r1=qk.QuantumRegister(msystem.n,"r1")
+reg_r1w=qk.QuantumRegister(msystem.n,"r1w")
+reg_r1a=qk.QuantumRegister(1,"r1a")
+reg_r2=qk.QuantumRegister(msystem.n,"r2")
+reg_r2w=qk.QuantumRegister(msystem.n, "r2w")
+reg_r2a=qk.QuantumRegister(1, "r2a")
+reg_a_hhl=qk.QuantumRegister(1, "a_hhl")
 reg_class=qk.ClassicalRegister(nq_phase+2*msystem.n+3)
 
 reg_all=reg_phase[:]+reg_r1[:]+reg_r1a[:]+reg_r2[:]+reg_r2a[:]+reg_a_hhl[:]
@@ -53,6 +53,7 @@ reg_all=reg_phase[:]+reg_r1[:]+reg_r1a[:]+reg_r2[:]+reg_r2a[:]+reg_a_hhl[:]
 
 circ_init=qk.QuantumCircuit(reg_a_hhl, reg_r2a, reg_r2w, reg_r2, reg_r1a, reg_r1w, reg_r1, reg_phase)
 circ_init.append(HGate(), reg_r2)
+circ_init.barrier()
 # QPE
 circ_init.append(HGate(),[reg_phase[0]])
 circ_init.append(HGate(),[reg_phase[1]])
@@ -111,7 +112,7 @@ circ_init.append(SwapGate(),reg_phase)
 circ_init.append(HGate(),[reg_phase[0]])
 circ_init.append(CZGate().power(0.5).inverse(),reg_phase)
 circ_init.append(HGate(),[reg_phase[1]])
-
+circ_init.barrier()
 # HHL ancilla rotation
 lam=-msystem.d
 circ_init.append(RYGate(2.0*math.acos(C/lam)).control(nq_phase,None,'00'), reg_phase[:]+reg_a_hhl[:])
@@ -121,7 +122,7 @@ lam=-msystem.d
 circ_init.append(RYGate(2.0*math.acos(C/lam)).control(nq_phase,None,'10'), reg_phase[:]+reg_a_hhl[:])
 lam=-msystem.X-msystem.d
 circ_init.append(RYGate(2.0*math.acos(C/lam)).control(nq_phase,None,'11'), reg_phase[:]+reg_a_hhl[:])
-
+circ_init.barrier()
 # inverse QPE
 circ_init.append(HGate(),[reg_phase[1]])
 circ_init.append(CZGate().power(0.5),reg_phase)
@@ -180,14 +181,14 @@ circ_init.append(XGate().control(2,None,'11'),[reg_phase[0]]+[reg_r1a[0]]+[reg_r
 circ_init.append(HGate().control(2,None,'01'),[reg_phase[0]]+[reg_r1a[0]]+[reg_r2[0]])
 circ_init.append(HGate(),[reg_phase[1]])
 circ_init.append(HGate(),[reg_phase[0]])
-
+circ_init.barrier()
 # inverse T
 circ_init.append(HGate(),reg_r2)
 
 
 
 #result
-print(circ_init.draw(output="text"))
+print(circ_init.draw(output="latex_source"))
 
 print("Finished building circuit.")
 print("Size of logical circuit: ", circ_init.size())
@@ -218,7 +219,7 @@ except Exception:
     # fallback: if only one circuit was executed, get_statevector() without args may work
     statevector = result.get_statevector()
 
-qa.PrintStatevector(statevector, nq_phase, msystem)
+#qa.PrintStatevector(statevector, nq_phase, msystem)
 
 # process the results: extract the solution and compare with a classical solution
 # can also check QPE by removing Rc and QPE inverses in the main circuit, and uncommenting below
