@@ -1,6 +1,8 @@
 # references are made to arXiv:2112.02600 (accurate as of v3)
 import sys
 import time
+import psutil
+import os
 import qiskit as qk
 import MatrixProcedures as mp
 import QAlgs as qa
@@ -8,21 +10,43 @@ import QWOps as qw
 from qiskit_aer import AerSimulator
 from qiskit.circuit.library import Initialize
 
-tstart = time.time()
-sim = AerSimulator(method="statevector")   # or AerSimulator() and default is "statevector"
-print("Simulator:", sim)
+def print_resources():
+    process = psutil.Process(os.getpid())
+    
+    # Memory usage in MB
+    mem_info = process.memory_info()
+    rss_mb = mem_info.rss / 1024 / 1024
+    
+    # CPU usage (can be >100% if multi-threaded)
+    cpu_usage = process.cpu_percent(interval=1.0)
+    
+    print(f"--- Resource Monitor ---")
+    print(f"Memory (RSS): {rss_mb:.2f} MB")
+    print(f"CPU Usage: {cpu_usage}%")
+    print(f"Threads: {process.num_threads()}")
 
+
+tstart = time.time()
+#sim = AerSimulator(method="statevector", device="GPU", cuStateVec_enable=True)
+sim = AerSimulator(
+    method="statevector",
+    device="CPU",
+    cuStateVec_enable=True,
+)
+#sim = AerSimulator(method="statevector")   # or AerSimulator() and default is "statevector"
+print("Simulator:", sim)
+print(AerSimulator().available_devices())
 outfile_path = "./output.txt"
 
 # the choice of nq_phase affects the accuracy of QPE
-nq_phase = 2
-MM = 2
+nq_phase = 1
+MM = 16
 
 # initialize the matrix equation, and prepare it for the quantum procedure
 print("Building system... ", end="")
 sys.stdout.flush()
 msystem = mp.MatrixSystem(M=MM, expand=False)
-msystem.MoMInit()
+msystem.RandInit(D=MM)
 msystem.PrepSystem()
 print("Done.")
 msystem.PrintMatrix()
@@ -107,7 +131,7 @@ circ.append(T0.inverse(), reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_
 print("T0* added")
 sys.stdout.flush()
 
-print(circ.draw(output="text"))
+#print(circ.draw(output="text"))
 
 print("Finished building circuit.")
 print("Size of logical circuit: ", circ.size())
@@ -119,7 +143,8 @@ circ_transpiled = qk.transpile(circ, sim, optimization_level=3)
 print("Done.")
 sys.stdout.flush()
 print("Size of transpiled circuit: ", circ_transpiled.size())
-
+print("Depth of transpiled circuit: ", circ_transpiled.depth())
+print("Number of qubits in circuit: ", circ_transpiled.num_qubits)
 circ_transpiled.save_statevector()
 # run the circuit and extract results
 print()
@@ -147,7 +172,8 @@ print("Done.")
 sol = qa.ExtractSolution(statevector, nq_phase, msystem)
 msystem.CompareClassical(sol)
 
-print()
+print_resources()
+
 print("Miscellaneous items:")
 print("%d %d %f" % (msystem.N, circ_transpiled.size(), time.time() - tstart))
 
