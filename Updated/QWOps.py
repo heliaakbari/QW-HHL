@@ -3,7 +3,7 @@ import math
 import numpy as np
 import MatrixProcedures
 from qiskit.circuit.library import PhaseGate, HGate, XGate, RYGate
-
+from qiskit.quantum_info import Operator
 EPSILON = 1e-10
 
 class Operators:
@@ -94,7 +94,7 @@ class Operators:
             p1_gate = self.P1(omega).control(1, ctrl_state='1')
             circ.append(p1_gate, [ctrl_qubit] + [reg_r2a[0]])
             circ.append(work_gate.inverse(), reg_r2[:] + reg_r2w[:])
-
+        print(circ.decompose().draw())
         return circ.to_gate(label=f"Bj({j})")
     
     # prepares |zeta_j> from the |0> state (no figure, quite trivial in our model. explained shortly after (57))

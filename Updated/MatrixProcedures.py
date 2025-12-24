@@ -33,7 +33,7 @@ class MatrixSystem:
         self.b: List[complex] = []
 
     #Load matrix from file
-    def FileInit(self, A_file: str = "./MS.txt", b_file: str = "./b0.txt"):
+    def FileInit(self, A_file: str = "./Updated/MS.txt", b_file: str = "./Updated/b0.txt"):
         """Load A₀ and b₀ from text files."""
         self.A0_indices.clear()
         self.A0_elements.clear()
@@ -108,7 +108,7 @@ class MatrixSystem:
             [1.0, -2.0]    # Row 1 entries
         ]
 
-        self.b0 = [0.0, 1.0]
+        self.b0 = [1.0, 0.0]
         self.bnorm = 1
 
         self.A_indices = [
@@ -121,7 +121,7 @@ class MatrixSystem:
             [1.0, 1.0]    # Row 1 entries
         ]
 
-        self.b = [0.0, 1.0]
+        self.b = [1.0, 0.0]
 
         #prepSystem
         self.n=1
@@ -282,7 +282,7 @@ class MatrixSystem:
                         self.d = max(self.d, abs(self.A_elements[j][idx]))
                     elif col > j:
                         break
-
+            self.d = self.d+1
             # apply shift A ← A + dI
             for j in range(self.N):
                 for idx, col in enumerate(self.A_indices[j]):

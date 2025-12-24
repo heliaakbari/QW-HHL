@@ -4,6 +4,7 @@ import time
 import psutil
 import os
 import qiskit as qk
+from qiskit.quantum_info import Operator
 import MatrixProcedures as mp
 import QAlgs as qa
 import QWOps as qw
@@ -39,15 +40,16 @@ print(AerSimulator().available_devices())
 outfile_path = "./output.txt"
 
 # the choice of nq_phase affects the accuracy of QPE
-nq_phase = 1
-MM = 16
+nq_phase = 2
+MM = 4
 
 # initialize the matrix equation, and prepare it for the quantum procedure
 print("Building system... ", end="")
 sys.stdout.flush()
 msystem = mp.MatrixSystem(M=MM, expand=False)
-msystem.RandInit(D=MM)
+msystem.FileInit()
 msystem.PrepSystem()
+print(f"msystem.d is {msystem.d} and msystem.X is {msystem.X}")
 print("Done.")
 msystem.PrintMatrix()
 
@@ -119,22 +121,30 @@ circ.append(QPE, reg_phase[:] + reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] 
 print("QPE added")
 sys.stdout.flush()
 
-circ.append(Rc, reg_phase[:] + reg_a_hhl[:])
-print("Rc added")
-sys.stdout.flush()
+# circ.append(Rc, reg_phase[:] + reg_a_hhl[:])
+# print("Rc added")
+# sys.stdout.flush()
 
-circ.append(QPE.inverse(), reg_phase[:] + reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
-print("QPE* added")
-sys.stdout.flush()
+# circ.append(QPE.inverse(), reg_phase[:] + reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
+# print("QPE* added")
+# sys.stdout.flush()
 
-circ.append(T0.inverse(), reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
-print("T0* added")
-sys.stdout.flush()
+# circ.append(T0.inverse(), reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
+# print("T0* added")
+# sys.stdout.flush()
 
 #print(circ.draw(output="text"))
 
 print("Finished building circuit.")
 print("Size of logical circuit: ", circ.size())
+
+latex_code = circ.draw(
+    output="latex_source",
+    fold=25   # try 20–40
+)
+with open("circuit.tex", "w") as f:
+    f.write(latex_code)
+
 # transpile the circuit
 print()
 print("Transpiling... ", end="")
@@ -167,7 +177,7 @@ print("Done.")
 #qa.PrintStatevector(statevector, nq_phase, msystem)
 # process the results: extract the solution and compare with a classical solution
 # can also check QPE by removing Rc and QPE inverses in the main circuit, and uncommenting below
-#qa.PrintStatevector(statevector,nq_phase,msystem)
+qa.PrintStatevector(statevector,nq_phase,msystem)
 #qa.CheckQPE(statevector, nq_phase, msystem)
 sol = qa.ExtractSolution(statevector, nq_phase, msystem)
 msystem.CompareClassical(sol)

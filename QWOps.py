@@ -198,7 +198,6 @@ class Operators:
         circ.append(self.RBp().control(1,None,'1'), reg_r1a[:]+reg_r2[:]+reg_r2w[:]+reg_r2a[:])
         circ.append(self.S(), reg_r1[:]+reg_r1a[:]+reg_r2[:]+reg_r2a[:])
         circ.append(self.iI(), [reg_r1[self.msystem.n-1]])
-        
         return circ.to_gate()
 
 

@@ -48,21 +48,22 @@ def PrintStatevector(sv, nq_phase, msystem):
                                 for c_hhl in range(2):
                                     s_hhl = f_a.format(c_hhl)
                                     amp = sv[c_tot]
-                                    print(
-                                        "|%s>|%s>|%s>|%s>|%s>|%s>|%s>|%s>   % .6f  % .6fi" %
-                                        (
-                                            s_p.ljust(max(2, nq_phase)),
-                                            s_r1.ljust(max(2, msystem.n)),
-                                            s_r1w.ljust(max(3, nq_work)),
-                                            s_r1a,
-                                            s_r2.ljust(max(2, msystem.n)),
-                                            s_r2w.ljust(max(3, nq_work)),
-                                            s_r2a,
-                                            s_hhl,
-                                            amp.real,
-                                            amp.imag
+                                    if abs(amp.real) > 0.001 :
+                                        print(
+                                            "|%s>|%s>|%s>|%s>|%s>|%s>|%s>|%s>   % .6f  % .6fi" %
+                                            (
+                                                s_p.ljust(max(2, nq_phase)),
+                                                s_r1.ljust(max(2, msystem.n)),
+                                                s_r1w.ljust(max(3, nq_work)),
+                                                s_r1a,
+                                                s_r2.ljust(max(2, msystem.n)),
+                                                s_r2w.ljust(max(3, nq_work)),
+                                                s_r2a,
+                                                s_hhl,
+                                                amp.real,
+                                                amp.imag
+                                            )
                                         )
-                                    )
                                     c_tot += 1
 
 def CheckQPE(sv, nq_phase, msystem):

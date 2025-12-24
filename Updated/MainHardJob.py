@@ -2,23 +2,20 @@ import sys
 import math
 import qiskit as qk
 import MatrixProcedures as mp
-import QAlgs as qa
-import QWOps as qw
 from qiskit import *
 from qiskit.circuit.library import HGate, XGate, RYGate, SwapGate, ZGate, SGate, CZGate
+from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2
 from qiskit.circuit.library import Initialize
 from qiskit_aer import AerSimulator
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime import (
+    Batch,
+    SamplerV2 as Sampler,
+    EstimatorV2 as Estimator,
+)
 
 EPSILON=1e-10
-shots=4096
-start_op=80
-stop_op=130
-
-back1 = AerSimulator(method="statevector")
-if(start_op==0):
-    f = open('./job_data.dat', 'w')
-else:
-    f = open('./job_data.dat', 'a')
+shots=1024
 
 # the choice of nq_phase affects the accuracy of QPE
 nq_phase=2
@@ -32,17 +29,17 @@ print("Done.")
 
 # calculate C
 C=0.9999999998
-
+######################################################################################################
 # get the first initializer
 init = Initialize(msystem.b).copy(name='Init')
 
 # initialize the quantum system itself
 reg_phase=qk.QuantumRegister(nq_phase,"phase")
 reg_r1=qk.QuantumRegister(msystem.n,"r1")
-reg_r1w=qk.QuantumRegister(msystem.n,"r1w")
+#reg_r1w=qk.QuantumRegister(msystem.n,"r1w")
 reg_r1a=qk.QuantumRegister(1,"r1a")
 reg_r2=qk.QuantumRegister(msystem.n,"r2")
-reg_r2w=qk.QuantumRegister(msystem.n, "r2w")
+#reg_r2w=qk.QuantumRegister(msystem.n, "r2w")
 reg_r2a=qk.QuantumRegister(1, "r2a")
 reg_a_hhl=qk.QuantumRegister(1, "a_hhl")
 reg_class=qk.ClassicalRegister(nq_phase+2*msystem.n+3)
@@ -51,7 +48,7 @@ reg_all=reg_phase[:]+reg_r1[:]+reg_r1a[:]+reg_r2[:]+reg_r2a[:]+reg_a_hhl[:]
 
 # initial T
 
-circ_init=qk.QuantumCircuit(reg_a_hhl, reg_r2a, reg_r2w, reg_r2, reg_r1a, reg_r1w, reg_r1, reg_phase)
+circ_init=qk.QuantumCircuit(reg_a_hhl, reg_r2a, reg_r2, reg_r1a, reg_r1, reg_phase)
 circ_init.append(HGate(), reg_r2)
 circ_init.barrier()
 # QPE
@@ -186,50 +183,30 @@ circ_init.barrier()
 circ_init.append(HGate(),reg_r2)
 
 
-
+circ_init.measure_all()
+######################################################################################################
 #result
 print(circ_init.draw(output="latex_source"))
 
 print("Finished building circuit.")
 print("Size of logical circuit: ", circ_init.size())
+
+
+
 # transpile the circuit
+service = QiskitRuntimeService()
+back1 = service.backend("ibm_fez")
 print()
 print("Transpiling... ", end="")
-sys.stdout.flush()
-circ_transpiled = qk.transpile(circ_init, back1, optimization_level=3)
+pm = generate_preset_pass_manager(optimization_level=1, backend=back1)
+isa_circuit = pm.run(circ_init)
 print("Done.")
-sys.stdout.flush()
-print("Size of transpiled circuit: ", circ_transpiled.size())
+print("Size of transpiled circuit: ", isa_circuit.size())
+job_id = 0
+with Batch(backend=back1):
+    sampler = Sampler()
+    job = sampler.run([isa_circuit], shots=1024)
+    job_id = job.job_id()
+    print(f"job id: {job_id}")
 
-circ_transpiled.save_statevector()
-# run the circuit and extract results
-print()
-print("Running circuit... ", end="")
-sys.stdout.flush()
-
-# Run the transpiled circuit on the AerSimulator
-job = back1.run(circ_transpiled)
-result = job.result()
-
-# get the final statevector
-# get_statevector requires the circuit reference; passing circ_transpiled is robust
-try:
-    statevector = result.get_statevector(circ_transpiled)
-except Exception:
-    # fallback: if only one circuit was executed, get_statevector() without args may work
-    statevector = result.get_statevector()
-
-#qa.PrintStatevector(statevector, nq_phase, msystem)
-
-# process the results: extract the solution and compare with a classical solution
-# can also check QPE by removing Rc and QPE inverses in the main circuit, and uncommenting below
-qa.PrintStatevector(statevector,nq_phase,msystem)
-#qa.CheckQPE(statevector, nq_phase, msystem)
-sol = qa.ExtractSolution(statevector, nq_phase, msystem)
-msystem.CompareClassical(sol)
-
-print()
-print(f"circuit size: {circ_transpiled.size()}")
-
-f.close()
-
+#print(service.job(job_id).result())

@@ -2,3 +2,4 @@ qiskit
 cirq
 numpy
 qiskit-aer
+qiskit-ibm-runtime
