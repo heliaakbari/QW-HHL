@@ -1,4 +1,0 @@
-qiskit
-cirq
-numpy
-qiskit-aer-gpu

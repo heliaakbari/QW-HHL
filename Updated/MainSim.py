@@ -10,6 +10,9 @@ import QAlgs as qa
 import QWOps as qw
 from qiskit_aer import AerSimulator
 from qiskit.circuit.library import Initialize
+import logging
+import os
+from datetime import datetime
 
 def print_resources():
     process = psutil.Process(os.getpid())
@@ -26,6 +29,42 @@ def print_resources():
     print(f"CPU Usage: {cpu_usage}%")
     print(f"Threads: {process.num_threads()}")
 
+class PrintToLogger:
+    def __init__(self, logger):
+        self.logger = logger
+
+    def write(self, message):
+        if message.strip():
+            self.logger.info(message.strip())
+
+    def flush(self):
+        pass
+
+def handleLogging():
+    os.makedirs("logs", exist_ok=True)
+
+    log_filename = datetime.now().strftime("logs/%Y-%m-%d_%H-%M-%S.log")
+
+    logger = logging.getLogger("my_app")
+    logger.setLevel(logging.INFO)
+
+    # Prevent logs from other libraries
+    logger.propagate = False
+
+    file_handler = logging.FileHandler(log_filename)
+    file_handler.setLevel(logging.INFO)
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s"
+    )
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+
+    sys.stdout = PrintToLogger(logger)
+    sys.stderr = PrintToLogger(logger)
+
+handleLogging()
 
 tstart = time.time()
 #sim = AerSimulator(method="statevector", device="GPU", cuStateVec_enable=True)
@@ -121,17 +160,17 @@ circ.append(QPE, reg_phase[:] + reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] 
 print("QPE added")
 sys.stdout.flush()
 
-# circ.append(Rc, reg_phase[:] + reg_a_hhl[:])
-# print("Rc added")
-# sys.stdout.flush()
+circ.append(Rc, reg_phase[:] + reg_a_hhl[:])
+print("Rc added")
+sys.stdout.flush()
 
-# circ.append(QPE.inverse(), reg_phase[:] + reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
-# print("QPE* added")
-# sys.stdout.flush()
+circ.append(QPE.inverse(), reg_phase[:] + reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
+print("QPE* added")
+sys.stdout.flush()
 
-# circ.append(T0.inverse(), reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
-# print("T0* added")
-# sys.stdout.flush()
+circ.append(T0.inverse(), reg_r1[:] + reg_r1w[:] + reg_r1a[:] + reg_r2[:] + reg_r2w[:] + reg_r2a[:])
+print("T0* added")
+sys.stdout.flush()
 
 #print(circ.draw(output="text"))
 

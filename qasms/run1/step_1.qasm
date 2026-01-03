@@ -1,9 +1,0 @@
-OPENQASM 2.0;
-include "qelib1.inc";
-qreg a_hhl[1];
-qreg r2a[1];
-qreg r2[2];
-qreg r1a[1];
-qreg r1[2];
-qreg phase[2];
-u(pi/2,0,pi) r2[0];
