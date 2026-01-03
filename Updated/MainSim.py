@@ -177,12 +177,6 @@ sys.stdout.flush()
 print("Finished building circuit.")
 print("Size of logical circuit: ", circ.size())
 
-latex_code = circ.draw(
-    output="latex_source",
-    fold=25   # try 20–40
-)
-with open("circuit.tex", "w") as f:
-    f.write(latex_code)
 
 # transpile the circuit
 print()
