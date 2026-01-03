@@ -4,9 +4,11 @@ from qiskit_aer import AerSimulator
 from qiskit.result import marginal_counts
 from qiskit import QuantumCircuit, qasm2, transpile
 import math
+import copy
 import pandas as pd
+from qiskit import *
 
-job_id = "d50rd6np3tbc73ajqma0"
+job_id = "d5ai3ohsmlfc739lip50"
 
 service = QiskitRuntimeService(
     channel='ibm_quantum_platform',
@@ -29,12 +31,15 @@ for i, qc in enumerate(results):
     total_shots = sum(exp_dist.values())
     exp_probs = {k: v/total_shots for k, v in exp_dist.items()}
 
-# Now clean_exp_counts and ideal_probs will have the same bitstring lengths!
-    # 2. Get Ideal Probability (Simulation)
-    # Remove measurements to get pure state for comparison if needed
     qc_ideal = QuantumCircuit.from_qasm_file(f"{files_dir}step_{i}.qasm")
+    ideal_probs = Statevector.from_instruction(qc_ideal).probabilities_dict()    
+    # deep_copy = copy.deepcopy(exp_probs)
+    # ideal_probs = {k: 0 for k, v in deep_copy.items()}  
+    # ideal_probs['000000000'] = 0.25
+    # ideal_probs['001000000'] = 0.25
+    # ideal_probs['000100000'] = 0.25
+    # ideal_probs['001100000'] = 0.25    
 
-    ideal_probs = Statevector.from_instruction(qc_ideal).probabilities_dict()
     print(f"gate size: {circuits[i].size()}")
     # 3. Calculate Error Metric
     metrics = {}

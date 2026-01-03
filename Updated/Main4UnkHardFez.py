@@ -12,6 +12,21 @@ from qiskit import QuantumCircuit, qasm2
 from qiskit_aer import AerSimulator
 
 
+from qiskit_aer import AerSimulator
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_aer.noise import (
+    NoiseModel)
+service = QiskitRuntimeService()
+back1 = service.backend("ibm_fez")
+noise_model = NoiseModel.from_backend(back1)
+print(
+    f"Name: {back1.name}\n"
+    f"Version: {back1.version}\n"
+    f"No. of qubits: {back1.num_qubits}\n"
+    f"basis gates: {back1.basis_gates}"
+)
+
+
 EPSILON=1e-10
 shots=1024
 
@@ -30,26 +45,20 @@ print("Done.")
 C = 1.9999999998
 
 ######################################################################################################
-# get the first initializer
-init = Initialize(msystem.b).copy(name='Init')
 
 # initialize the quantum system itself
 reg_phase=qk.QuantumRegister(nq_phase,"phase")
 reg_r1=qk.QuantumRegister(msystem.n,"r1")
-reg_r1w=qk.QuantumRegister(max(1, msystem.n - 1),"r1w")
 reg_r1a=qk.QuantumRegister(1,"r1a")
 reg_r2=qk.QuantumRegister(msystem.n,"r2")
-reg_r2w=qk.QuantumRegister(max(1, msystem.n - 1), "r2w")
 reg_r2a=qk.QuantumRegister(1, "r2a")
 reg_a_hhl=qk.QuantumRegister(1, "a_hhl")
 reg_class=qk.ClassicalRegister(nq_phase+2*msystem.n+3)
 circ_init = qk.QuantumCircuit(
     reg_a_hhl,
     reg_r2a,
-    reg_r2w,
     reg_r2,
     reg_r1a,
-    reg_r1w,
     reg_r1,
     reg_phase,
     name="HHL_main",
@@ -160,18 +169,9 @@ for q in reg_r2:
     circ_init.h(q)
 circ_init.barrier()
 
+#########################################################
 
-latex_code = circ_init.draw(
-    output="latex_source",
-    fold=25   # try 20–40
-)
-with open("circuit.tex", "w") as f:
-    f.write(latex_code)
-
-
-#result
-back1 = AerSimulator(method="statevector")
-#print(circ_init.draw(output="text"))
+circ_init.measure_all()
 
 print("Finished building circuit.")
 print("Size of logical circuit: ", circ_init.size())
@@ -179,38 +179,23 @@ print("Size of logical circuit: ", circ_init.size())
 print()
 print("Transpiling... ", end="")
 sys.stdout.flush()
-circ_transpiled = qk.transpile(circ_init, back1, optimization_level=3)
+circ_transpiled = qk.transpile(circ_init, back1, optimization_level=2)
 print("Done.")
 sys.stdout.flush()
 print("Size of transpiled circuit: ", circ_transpiled.size())
 
-circ_transpiled.save_statevector()
-# run the circuit and extract results
-print()
-print("Running circuit... ", end="")
-sys.stdout.flush()
+sim_noise = AerSimulator(noise_model=noise_model)
+ 
+# Transpile circuit for noisy basis gates
+passmanager = generate_preset_pass_manager(
+    optimization_level=2, backend=sim_noise
+)
+circ_tnoise = passmanager.run(circ_init)
+ 
+# Run and get counts
+result_bit_flip = sim_noise.run(circ_tnoise, shots=1024).result()
+counts_bit_flip = result_bit_flip.get_counts(0)
+ 
+sorted_result = dict(sorted(counts_bit_flip.items(), key=lambda x: x[1], reverse=True))
 
-# Run the transpiled circuit on the AerSimulator
-job = back1.run(circ_transpiled)
-result = job.result()
-
-# get the final statevector
-# get_statevector requires the circuit reference; passing circ_transpiled is robust
-try:
-    statevector = result.get_statevector(circ_transpiled)
-except Exception:
-    # fallback: if only one circuit was executed, get_statevector() without args may work
-    statevector = result.get_statevector()
-
-#qa.PrintStatevector(statevector, nq_phase, msystem)
-
-# process the results: extract the solution and compare with a classical solution
-# can also check QPE by removing Rc and QPE inverses in the main circuit, and uncommenting below
-qa.PrintStatevector(statevector,nq_phase,msystem)
-#qa.CheckQPE(statevector, nq_phase, msystem)
-sol = qa.ExtractSolution(statevector, nq_phase, msystem)
-msystem.CompareClassical(sol)
-
-print()
-print(f"circuit size: {circ_transpiled.size()}")
-
+print(f"res: {sorted_result}")

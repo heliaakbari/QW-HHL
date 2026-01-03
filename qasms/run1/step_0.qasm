@@ -1,0 +1,9 @@
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg a_hhl[1];
+qreg r2a[1];
+qreg r2[2];
+qreg r1a[1];
+qreg r1[2];
+qreg phase[2];
+barrier a_hhl[0],r2a[0],r2[0],r2[1],r1a[0],r1[0],r1[1],phase[0],phase[1];

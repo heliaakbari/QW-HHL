@@ -1,19 +1,25 @@
 import sys
 import numpy as np
 import math
+from qiskit.quantum_info import Statevector
 import qiskit as qk
-import QAlgs as qa
 from qiskit.quantum_info import Operator
 import MatrixProcedures as mp
 from qiskit import *
 from qiskit.circuit.library import HGate, XGate, RYGate, SwapGate, ZGate, SGate, CZGate
+from qiskit_ibm_runtime.fake_provider import FakeGuadalupeV2
 from qiskit.circuit.library import Initialize
 from qiskit import QuantumCircuit, qasm2 
 from qiskit_aer import AerSimulator
-
+from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime import (
+    Batch,
+    SamplerV2 as Sampler,
+    EstimatorV2 as Estimator,
+)
 
 EPSILON=1e-10
-shots=1024
+shots=4096
 
 # the choice of nq_phase affects the accuracy of QPE
 nq_phase=2
@@ -27,29 +33,21 @@ msystem.PrepSystem()
 print("Done.")
 
 # calculate C
-C = 1.9999999998
-
+C=1.9999999998
 ######################################################################################################
-# get the first initializer
-init = Initialize(msystem.b).copy(name='Init')
-
 # initialize the quantum system itself
 reg_phase=qk.QuantumRegister(nq_phase,"phase")
 reg_r1=qk.QuantumRegister(msystem.n,"r1")
-reg_r1w=qk.QuantumRegister(max(1, msystem.n - 1),"r1w")
 reg_r1a=qk.QuantumRegister(1,"r1a")
 reg_r2=qk.QuantumRegister(msystem.n,"r2")
-reg_r2w=qk.QuantumRegister(max(1, msystem.n - 1), "r2w")
 reg_r2a=qk.QuantumRegister(1, "r2a")
 reg_a_hhl=qk.QuantumRegister(1, "a_hhl")
 reg_class=qk.ClassicalRegister(nq_phase+2*msystem.n+3)
 circ_init = qk.QuantumCircuit(
     reg_a_hhl,
     reg_r2a,
-    reg_r2w,
     reg_r2,
     reg_r1a,
-    reg_r1w,
     reg_r1,
     reg_phase,
     name="HHL_main",
@@ -159,58 +157,85 @@ circ_init.barrier()
 for q in reg_r2:
     circ_init.h(q)
 circ_init.barrier()
+######################################################################################################
+
+service = QiskitRuntimeService()
+backend = service.backend("ibm_fez")
+
+target_circuit = circ_init
+
+qasm2.dump(target_circuit, f"./qasms/run1/whole.qasm")
+    
+threshold = 1000
+num_instructions = len(target_circuit.data)
+pm = generate_preset_pass_manager(optimization_level=2, backend=backend)
+
+incremental_circuits = []
+current_index = 0
+step_counter = 0
+
+print(f"Total instructions to process: {num_instructions}")
+
+while current_index < num_instructions:
+    # 1. Deduce the starting state classically
+    # This represents the "perfect" state up to the current_index
+    prefix_qc = qk.QuantumCircuit(reg_a_hhl, reg_r2a, reg_r2, reg_r1a, reg_r1, reg_phase)
+    # Add all gates processed in previous segments
+    prefix_data = target_circuit.data[:current_index]
+    for inst, qargs, cargs in prefix_data:
+        prefix_qc.append(inst, qargs, cargs)
+
+    deduced_state = Statevector.from_instruction(prefix_qc)
+
+    # 1. Ensure it's a complex128 for max precision
+    data = np.array(deduced_state.data, dtype=np.complex128)
+
+    # 2. Force hard normalization
+    norm = np.linalg.norm(data)
+    if norm == 0:
+        raise ValueError("Statevector norm is zero!")
+    data = data / norm
+
+    # 3. Clip tiny values that cause precision noise in Isometry decomposition
+    data[np.abs(data) < 1e-15] = 0
+
+    # 4. Re-create the statevector
+    deduced_state = Statevector(data)
+
+    # 2. Always add exactly ONE gate per step
+    actual_step_taken = 1
+    # Create the circuit
+    trial_qc = qk.QuantumCircuit(
+        reg_a_hhl, reg_r2a, reg_r2, reg_r1a, reg_r1, reg_phase
+    )
+    trial_qc.prepare_state(deduced_state)
+    trial_qc = trial_qc.decompose() # Decompose high-level state prep into gates
+    # Add exactly one gate
+    inst, qargs, cargs = target_circuit.data[current_index]
+    trial_qc.append(inst, qargs, cargs)
+    print(f"DEBUG: Processing gate {current_index}: {inst.name} on qubits {qargs}")
+    trial_qc.measure_all()
+    isa_qc = transpile(
+            trial_qc, 
+            backend=backend, 
+            optimization_level=3  
+        )
+    incremental_circuits.append(isa_qc)
+
+    print(
+        f"Segment {step_counter}: "
+        f"Processed gate {current_index}"
+        f"transpiled size {isa_qc.size()}"
+    )
+
+    # Move forward by exactly one gate
+    current_index += 1
+    step_counter += 1
 
 
-latex_code = circ_init.draw(
-    output="latex_source",
-    fold=25   # try 20–40
-)
-with open("circuit.tex", "w") as f:
-    f.write(latex_code)
-
-
-#result
-back1 = AerSimulator(method="statevector")
-#print(circ_init.draw(output="text"))
-
-print("Finished building circuit.")
-print("Size of logical circuit: ", circ_init.size())
-# transpile the circuit
-print()
-print("Transpiling... ", end="")
-sys.stdout.flush()
-circ_transpiled = qk.transpile(circ_init, back1, optimization_level=3)
-print("Done.")
-sys.stdout.flush()
-print("Size of transpiled circuit: ", circ_transpiled.size())
-
-circ_transpiled.save_statevector()
-# run the circuit and extract results
-print()
-print("Running circuit... ", end="")
-sys.stdout.flush()
-
-# Run the transpiled circuit on the AerSimulator
-job = back1.run(circ_transpiled)
-result = job.result()
-
-# get the final statevector
-# get_statevector requires the circuit reference; passing circ_transpiled is robust
-try:
-    statevector = result.get_statevector(circ_transpiled)
-except Exception:
-    # fallback: if only one circuit was executed, get_statevector() without args may work
-    statevector = result.get_statevector()
-
-#qa.PrintStatevector(statevector, nq_phase, msystem)
-
-# process the results: extract the solution and compare with a classical solution
-# can also check QPE by removing Rc and QPE inverses in the main circuit, and uncommenting below
-qa.PrintStatevector(statevector,nq_phase,msystem)
-#qa.CheckQPE(statevector, nq_phase, msystem)
-sol = qa.ExtractSolution(statevector, nq_phase, msystem)
-msystem.CompareClassical(sol)
-
-print()
-print(f"circuit size: {circ_transpiled.size()}")
-
+job_id = 0
+with Batch(backend=backend):
+    sampler = Sampler()
+    job = sampler.run(incremental_circuits, shots=4096)
+    job_id = job.job_id()
+    print(f"job id: {job_id}")

@@ -1,0 +1,170 @@
+OPENQASM 2.0;
+include "qelib1.inc";
+gate cch q0,q1,q2 { s q2; h q2; t q2; ccx q0,q1,q2; tdg q2; h q2; sdg q2; }
+gate cch_o1 q0,q1,q2 { x q1; cch q0,q1,q2; x q1; }
+gate mcx q0,q1,q2,q3 { h q3; p(pi/8) q0; p(pi/8) q1; p(pi/8) q2; p(pi/8) q3; cx q0,q1; p(-pi/8) q1; cx q0,q1; cx q1,q2; p(-pi/8) q2; cx q0,q2; p(pi/8) q2; cx q1,q2; p(-pi/8) q2; cx q0,q2; cx q2,q3; p(-pi/8) q3; cx q1,q3; p(pi/8) q3; cx q2,q3; p(-pi/8) q3; cx q0,q3; p(pi/8) q3; cx q2,q3; p(-pi/8) q3; cx q1,q3; p(pi/8) q3; cx q2,q3; p(-pi/8) q3; cx q0,q3; h q3; }
+gate mcx_o1 q0,q1,q2,q3 { x q1; x q2; mcx q0,q1,q2,q3; x q1; x q2; }
+gate c3z q0,q1,q2,q3 { h q3; mcx q0,q1,q2,q3; h q3; }
+gate c3z_o1 q0,q1,q2,q3 { x q1; x q2; c3z q0,q1,q2,q3; x q1; x q2; }
+gate cs q0,q1 { t q0; cx q0,q1; tdg q1; cx q0,q1; t q1; }
+gate unitary q0,q1 { u(pi,3*pi/4,pi/4) q0; u(0.15207143187806368,pi/2,0) q1; cx q0,q1; u(pi,1.4480296506245018,3.0188259774193975) q0; u(1.6146675683482492,1.6782227634679643,-2.3456611765246667) q1; cx q0,q1; u(0,-2.5143518306473034,-1.412638986339939) q0; u(1.4187248949168327,-pi/4,-pi/2) q1; }
+gate ccry(param0) q0,q1,q2 { cu(3.1415785114535844,0,0,0) q1,q2; cx q1,q0; cu(-3.1415785114535844,0,0,0) q0,q2; cx q1,q0; cu(3.1415785114535844,0,0,0) q0,q2; }
+gate ccry_o0(param0) q0,q1,q2 { x q0; x q1; ccry(6.283157022907169) q0,q1,q2; x q0; x q1; }
+gate ccry_129366199293808(param0) q0,q1,q2 { cu(1.7320508792457896e-05,0,0,0) q1,q2; cx q1,q0; cu(-1.7320508792457896e-05,0,0,0) q0,q2; cx q1,q0; cu(1.7320508792457896e-05,0,0,0) q0,q2; }
+gate ccry_o1(param0) q0,q1,q2 { x q1; ccry_129366199293808(3.464101758491579e-05) q0,q1,q2; x q1; }
+gate ccry_o2(param0) q0,q1,q2 { x q0; ccry(6.283157022907169) q0,q1,q2; x q0; }
+gate ccry_129366718827728(param0) q0,q1,q2 { cu(1.9106332362077707,0,0,0) q1,q2; cx q1,q0; cu(-1.9106332362077707,0,0,0) q0,q2; cx q1,q0; cu(1.9106332362077707,0,0,0) q0,q2; }
+gate unitary_129366718774832 q0,q1 { u(pi,3*pi/4,pi/4) q0; u(2.9895212217117293,-pi/2,0) q1; cx q0,q1; u(pi,1.4480296506245018,3.0188259774193975) q0; u(1.6146675683482492,1.6782227634679643,-2.3456611765246667) q1; cx q0,q1; u(0,0.1029112209703742,-2.4591057111627195) q0; u(1.722867758672961,pi/4,pi/2) q1; }
+gate csdg q0,q1 { tdg q0; cx q0,q1; t q1; cx q0,q1; tdg q1; }
+qreg a_hhl[1];
+qreg r2a[1];
+qreg r2[2];
+qreg r1a[1];
+qreg r1[2];
+qreg phase[2];
+barrier a_hhl[0],r2a[0],r2[0],r2[1],r1a[0],r1[0],r1[1],phase[0],phase[1];
+h r2[0];
+h r2[1];
+barrier a_hhl[0],r2a[0],r2[0],r2[1],r1a[0],r1[0],r1[1],phase[0],phase[1];
+h phase[0];
+h phase[1];
+cch_o1 phase[0],r1a[0],r2[0];
+cch_o1 phase[0],r1a[0],r2[1];
+ccx phase[0],r1a[0],r2a[0];
+cz phase[0],r2[0];
+cx phase[0],r2[0];
+cz phase[0],r2[0];
+cx phase[0],r2[0];
+mcx_o1 phase[0],r2[0],r2[1],r2a[0];
+c3z_o1 phase[0],r2[0],r2[1],r2a[0];
+mcx_o1 phase[0],r2[0],r2[1],r2a[0];
+cch_o1 phase[0],r1a[0],r2[0];
+cch_o1 phase[0],r1a[0],r2[1];
+ccx phase[0],r1a[0],r2a[0];
+cswap phase[0],r1[0],r2[0];
+cswap phase[0],r1[1],r2[1];
+cswap phase[0],r1a[0],r2a[0];
+cs phase[0],r1[0];
+cx phase[0],r1[0];
+cs phase[0],r1[0];
+cx phase[0],r1[0];
+cch_o1 phase[1],r1a[0],r2[0];
+cch_o1 phase[1],r1a[0],r2[1];
+ccx phase[1],r1a[0],r2a[0];
+cz phase[1],r2[0];
+cx phase[1],r2[0];
+cz phase[1],r2[0];
+cx phase[1],r2[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+c3z_o1 phase[1],r2[0],r2[1],r2a[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+cch_o1 phase[1],r1a[0],r2[0];
+cch_o1 phase[1],r1a[0],r2[1];
+ccx phase[1],r1a[0],r2a[0];
+cswap phase[1],r1[0],r2[0];
+cswap phase[1],r1[1],r2[1];
+cswap phase[1],r1a[0],r2a[0];
+cs phase[1],r1[0];
+cx phase[1],r1[0];
+cs phase[1],r1[0];
+cx phase[1],r1[0];
+cch_o1 phase[1],r1a[0],r2[0];
+cch_o1 phase[1],r1a[0],r2[1];
+ccx phase[1],r1a[0],r2a[0];
+cz phase[1],r2[0];
+cx phase[1],r2[0];
+cz phase[1],r2[0];
+cx phase[1],r2[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+c3z_o1 phase[1],r2[0],r2[1],r2a[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+cch_o1 phase[1],r1a[0],r2[0];
+cch_o1 phase[1],r1a[0],r2[1];
+ccx phase[1],r1a[0],r2a[0];
+cswap phase[1],r1[0],r2[0];
+cswap phase[1],r1[1],r2[1];
+cswap phase[1],r1a[0],r2a[0];
+cs phase[1],r1[0];
+cx phase[1],r1[0];
+cs phase[1],r1[0];
+cx phase[1],r1[0];
+swap phase[0],phase[1];
+h phase[0];
+unitary phase[0],phase[1];
+h phase[1];
+barrier a_hhl[0],r2a[0],r2[0],r2[1],r1a[0],r1[0],r1[1],phase[0],phase[1];
+ccry_o0(6.283157022907169) phase[0],phase[1],a_hhl[0];
+ccry_o1(3.464101758491579e-05) phase[0],phase[1],a_hhl[0];
+ccry_o2(6.283157022907169) phase[0],phase[1],a_hhl[0];
+ccry_129366718827728(3.8212664724155414) phase[0],phase[1],a_hhl[0];
+barrier a_hhl[0],r2a[0],r2[0],r2[1],r1a[0],r1[0],r1[1],phase[0],phase[1];
+h phase[1];
+unitary_129366718774832 phase[0],phase[1];
+h phase[0];
+swap phase[0],phase[1];
+cx phase[1],r1[0];
+csdg phase[1],r1[0];
+cx phase[1],r1[0];
+csdg phase[1],r1[0];
+cswap phase[1],r1a[0],r2a[0];
+cswap phase[1],r1[1],r2[1];
+cswap phase[1],r1[0],r2[0];
+ccx phase[1],r1a[0],r2a[0];
+cch_o1 phase[1],r1a[0],r2[1];
+cch_o1 phase[1],r1a[0],r2[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+c3z_o1 phase[1],r2[0],r2[1],r2a[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+cx phase[1],r2[0];
+cz phase[1],r2[0];
+cx phase[1],r2[0];
+cz phase[1],r2[0];
+ccx phase[1],r1a[0],r2a[0];
+cch_o1 phase[1],r1a[0],r2[1];
+cch_o1 phase[1],r1a[0],r2[0];
+cx phase[1],r1[0];
+csdg phase[1],r1[0];
+cx phase[1],r1[0];
+csdg phase[1],r1[0];
+cswap phase[1],r1a[0],r2a[0];
+cswap phase[1],r1[1],r2[1];
+cswap phase[1],r1[0],r2[0];
+ccx phase[1],r1a[0],r2a[0];
+cch_o1 phase[1],r1a[0],r2[1];
+cch_o1 phase[1],r1a[0],r2[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+c3z_o1 phase[1],r2[0],r2[1],r2a[0];
+mcx_o1 phase[1],r2[0],r2[1],r2a[0];
+cx phase[1],r2[0];
+cz phase[1],r2[0];
+cx phase[1],r2[0];
+cz phase[1],r2[0];
+ccx phase[1],r1a[0],r2a[0];
+cch_o1 phase[1],r1a[0],r2[1];
+cch_o1 phase[1],r1a[0],r2[0];
+cx phase[0],r1[0];
+csdg phase[0],r1[0];
+cx phase[0],r1[0];
+csdg phase[0],r1[0];
+cswap phase[0],r1a[0],r2a[0];
+cswap phase[0],r1[1],r2[1];
+cswap phase[0],r1[0],r2[0];
+ccx phase[0],r1a[0],r2a[0];
+cch_o1 phase[0],r1a[0],r2[1];
+cch_o1 phase[0],r1a[0],r2[0];
+mcx_o1 phase[0],r2[0],r2[1],r2a[0];
+c3z_o1 phase[0],r2[0],r2[1],r2a[0];
+mcx_o1 phase[0],r2[0],r2[1],r2a[0];
+cx phase[0],r2[0];
+cz phase[0],r2[0];
+cx phase[0],r2[0];
+cz phase[0],r2[0];
+ccx phase[0],r1a[0],r2a[0];
+cch_o1 phase[0],r1a[0],r2[1];
+cch_o1 phase[0],r1a[0],r2[0];
+h phase[0];
+h phase[1];
+barrier a_hhl[0],r2a[0],r2[0],r2[1],r1a[0],r1[0],r1[1],phase[0],phase[1];
+h r2[0];
+h r2[1];
+barrier a_hhl[0],r2a[0],r2[0],r2[1],r1a[0],r1[0],r1[1],phase[0],phase[1];
