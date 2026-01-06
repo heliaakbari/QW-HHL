@@ -4,6 +4,7 @@ import random
 import bisect
 from typing import List
 import numpy as np
+from typing import List, Tuple
 
 EPSILON = 1e-10
 i = 1j
@@ -32,6 +33,35 @@ class MatrixSystem:
         self.A_elements: List[List[complex]] = []
         self.b: List[complex] = []
 
+    def dense_to_sparse(self,
+        A: np.ndarray,
+        b: np.ndarray,
+    ) -> Tuple[List[List[int]], List[List[complex]], List[complex]]:
+        
+        if A.ndim != 2:
+            raise ValueError("A must be a 2D matrix")
+        if b.ndim != 1:
+            raise ValueError("b must be a 1D vector")
+        if A.shape[0] != b.shape[0]:
+            raise ValueError("A rows must match length of b")
+
+        A0_indices: List[List[int]] = []
+        A0_elements: List[List[complex]] = []
+
+        for row in A:
+            indices = []
+            elements = []
+            for j, value in enumerate(row):
+                if abs(value) > EPSILON:
+                    indices.append(j)
+                    elements.append(complex(value))
+            A0_indices.append(indices)
+            A0_elements.append(elements)
+
+        b0: List[complex] = [complex(x) for x in b]
+
+        return A0_indices, A0_elements, b0
+    
     #Load matrix from file
     def FileInit(self, A_file: str = "./Updated/MS.txt", b_file: str = "./Updated/b0.txt"):
         """Load A₀ and b₀ from text files."""
@@ -131,6 +161,51 @@ class MatrixSystem:
         self.X=2.0+EPSILON 
         self.C = 0
 
+    def FullyQuantumExtendedInit(self):
+        
+        self.A0_indices = [
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+        ]
+
+        self.A0_elements = [
+            [-1.0, 1.0, 1.0, 1.0],   # Row 0 entries
+            [1.0, -1.0, 1.0, 1.0],   # Row 1 entries
+            [1.0, 1.0, -1.0, 1.0],
+            [1.0, 1.0, 1.0, -1.0]
+        ]
+
+        self.b0 = [1.0, 0.0, 0.0, 0.0]
+        self.bnorm = 1
+
+        self.A_indices = [
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+            [0, 1, 2, 3],   # Row 0 → columns containing values
+        ]
+
+
+        self.A_elements = [
+            [1.0, 1.0, 1.0, 1.0],   # Row 0 entries
+            [1.0, 1.0, 1.0, 1.0],   # Row 1 entries
+            [1.0, 1.0, 1.0, 1.0],
+            [1.0, 1.0, 1.0, 1.0]
+        ]
+
+
+        self.b = [1.0, 0.0, 0.0, 0.0]
+
+        #prepSystem
+        self.n=2
+        self.N=4
+        self.ap=1
+        self.d= 2
+        self.X= 4+EPSILON 
+        self.C = 0
+
     # Random sparse Hermitian
     def RandInit(self, D: int = 1):
         """
@@ -210,6 +285,81 @@ class MatrixSystem:
             y = 2.0 * (random.random() - 0.5)
             self.b0.append(complex(x, y))
 
+    def TestCaseInit_Kappa(self,
+        D,
+        kappa_target,
+        seed=None,
+    ):
+
+        if seed is not None:
+            np.random.seed(seed)
+
+        # Step 1: sparse Hermitian
+        A = np.zeros((D, D), dtype=np.complex128)
+
+
+        for i in range(D):
+            cols = np.random.choice(
+                [j for j in range(D) if j != i],
+                size=D - 1,
+                replace=False
+            )
+
+            for j in cols:
+                mag = np.random.uniform(0.1, 1.0)
+                phase = np.random.uniform(0.0, 2 * np.pi)
+                val = mag * np.exp(1j * phase)
+
+                A[i, j] = val
+                A[j, i] = np.conj(val)  # Hermitian symmetry
+
+        # Step 2: positive diagonal entries
+        for i in range(D):
+            A[i, i] = np.sum(np.abs(A[i])) + 1.0
+
+        # Step 3: spectral rescaling to target κ
+        eigvals, eigvecs = np.linalg.eigh(A)
+        eigvals = np.clip(eigvals, 1e-8, None)
+
+        eigvals_scaled = 1 + (eigvals - eigvals.min()) * (
+            kappa_target - 1
+        ) / (eigvals.max() - eigvals.min())
+
+        A = eigvecs @ np.diag(eigvals_scaled) @ eigvecs.T
+
+        # Step 4: zero-out tiny entries
+        A[np.abs(A) < EPSILON] = 0.0
+
+        # Enforce exact Hermiticity after cleanup
+        A = 0.5 * (A + A.T)
+
+        # Step 5: recompute spectrum & κ
+        eigenvalues = np.linalg.eigvalsh(A)
+        lambda_min = np.min(eigenvalues)
+        lambda_max = np.max(eigenvalues)
+
+        kappa_actual = lambda_max / lambda_min
+
+        # Step 6: recompute sparsity
+        nonzeros_per_row = np.count_nonzero(A, axis=1)
+        sparsity_actual = int(nonzeros_per_row.max())
+
+        # Step 6: generate solution and RHS
+        x_true = np.random.randn(D)
+        b = A @ x_true
+
+        self.A0_indices, self.A0_elements, self.b0 = self.dense_to_sparse(A, b)
+        return {
+            "A": A,
+            "b": b,
+            "x_true": x_true,
+            "dimension": D,
+            "sparsity": sparsity_actual,
+            "kappa_target": kappa_target,
+            "kappa_actual": kappa_actual,
+            "eigenvalues": eigenvalues
+        }
+
     def PrepSystem(self):
         """
         Prepare expanded or non-expanded block-encoded system (A, b).
@@ -282,7 +432,6 @@ class MatrixSystem:
                         self.d = max(self.d, abs(self.A_elements[j][idx]))
                     elif col > j:
                         break
-            self.d = self.d+1
             # apply shift A ← A + dI
             for j in range(self.N):
                 for idx, col in enumerate(self.A_indices[j]):

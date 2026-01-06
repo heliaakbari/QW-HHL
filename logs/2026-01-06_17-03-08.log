@@ -1,0 +1,12 @@
+2026-01-06 17:03:08,451 - INFO - Simulator:
+2026-01-06 17:03:08,451 - INFO - AerSimulator('aer_simulator_statevector')
+2026-01-06 17:03:08,451 - INFO - ('CPU',)
+2026-01-06 17:03:08,451 - INFO - Building system...
+2026-01-06 17:03:08,453 - INFO - Traceback (most recent call last):
+2026-01-06 17:03:08,454 - INFO - File "/home/helia715/QMES/Updated/MainSim.py", line 89, in <module>
+    msystem.TestCaseInit_Kappa(D=MM, kappa_target=20, seed=None)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-06 17:03:08,454 - INFO - File "/home/helia715/QMES/Updated/MatrixProcedures.py", line 347, in TestCaseInit_Kappa
+    self.A0_indices, self.A0_elements, self.b0 = self.dense_to_sparse(A, b)
+                                                 ~~~~~~~~~~~~~~~~~~~~^^^^^^
+2026-01-06 17:03:08,454 - INFO - TypeError: MatrixSystem.dense_to_sparse() takes 2 positional arguments but 3 were given

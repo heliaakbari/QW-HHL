@@ -86,7 +86,7 @@ MM = 4
 print("Building system... ", end="")
 sys.stdout.flush()
 msystem = mp.MatrixSystem(M=MM, expand=False)
-msystem.FileInit()
+msystem.TestCaseInit_Kappa(D=MM, kappa_target=20, seed=42)
 msystem.PrepSystem()
 print(f"msystem.d is {msystem.d} and msystem.X is {msystem.X}")
 print("Done.")
@@ -175,14 +175,12 @@ sys.stdout.flush()
 #print(circ.draw(output="text"))
 
 print("Finished building circuit.")
-print("Size of logical circuit: ", circ.size())
-
 
 # transpile the circuit
 print()
 print("Transpiling... ", end="")
 sys.stdout.flush()
-circ_transpiled = qk.transpile(circ, sim, optimization_level=3)
+circ_transpiled = qk.transpile(circ, sim, optimization_level=2)
 print("Done.")
 sys.stdout.flush()
 print("Size of transpiled circuit: ", circ_transpiled.size())
@@ -210,7 +208,7 @@ print("Done.")
 #qa.PrintStatevector(statevector, nq_phase, msystem)
 # process the results: extract the solution and compare with a classical solution
 # can also check QPE by removing Rc and QPE inverses in the main circuit, and uncommenting below
-qa.PrintStatevector(statevector,nq_phase,msystem)
+#qa.PrintStatevector(statevector,nq_phase,msystem)
 #qa.CheckQPE(statevector, nq_phase, msystem)
 sol = qa.ExtractSolution(statevector, nq_phase, msystem)
 msystem.CompareClassical(sol)
@@ -219,10 +217,3 @@ print_resources()
 
 print("Miscellaneous items:")
 print("%d %d %f" % (msystem.N, circ_transpiled.size(), time.time() - tstart))
-
-# write summary to file
-with open(outfile_path, "w") as outfile:
-    outfile.write(str(msystem.N) + "\n")
-    outfile.write(str(sum([len(x) for x in msystem.A_indices[:]])) + "\n")
-    outfile.write(str(circ_transpiled.size()) + "\n")
-    outfile.write(str(time.time() - tstart) + "\n")
