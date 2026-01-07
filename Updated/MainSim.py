@@ -13,6 +13,7 @@ from qiskit.circuit.library import Initialize
 import logging
 import os
 from datetime import datetime
+import argparse
 
 def print_resources():
     process = psutil.Process(os.getpid())
@@ -66,6 +67,18 @@ def handleLogging():
 
 handleLogging()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--dimension", type=int, required=True)
+parser.add_argument("--phase", type=int, required=True)
+parser.add_argument("--kappa", type=float, required=False)
+parser.add_argument("--seed", type=int, required=False)
+parser.add_argument("--mode", required=True)
+
+
+args = parser.parse_args()
+
+print(f"mode: {args.mode}, dimension: {args.dimension}, phase: {args.phase}, kappa: {args.kappa}, seed: {args.seed}")
+
 tstart = time.time()
 #sim = AerSimulator(method="statevector", device="GPU", cuStateVec_enable=True)
 sim = AerSimulator(
@@ -79,15 +92,21 @@ print(AerSimulator().available_devices())
 outfile_path = "./output.txt"
 
 # the choice of nq_phase affects the accuracy of QPE
-nq_phase = 2
-MM = 4
+nq_phase = args.phase
+MM = args.dimension
 
 # initialize the matrix equation, and prepare it for the quantum procedure
 print("Building system... ", end="")
 sys.stdout.flush()
 msystem = mp.MatrixSystem(M=MM, expand=False)
-msystem.TestCaseInit_Kappa(D=MM, kappa_target=20, seed=42)
-msystem.PrepSystem()
+
+if args.mode == "kappatest":
+    msystem.TestCaseInit_Kappa(D=MM, kappa_target=args.kappa, seed=args.seed)
+    msystem.PrepSystem()
+else:
+    msystem.RandInitSeed(D=args.dimenstion, seed=args.seed)
+    msystem.PrepSystem()
+
 print(f"msystem.d is {msystem.d} and msystem.X is {msystem.X}")
 print("Done.")
 msystem.PrintMatrix()

@@ -316,7 +316,8 @@ class MatrixSystem:
         # Step 2: positive diagonal entries
         for i in range(D):
             A[i, i] = np.sum(np.abs(A[i])) + 1.0
-
+        print("A based on seed before k rescaling:")
+        self.PrintMatrix2(A)
         # Step 3: spectral rescaling to target κ
         eigvals, eigvecs = np.linalg.eigh(A)
         eigvals = np.clip(eigvals, 1e-8, None)
@@ -516,6 +517,15 @@ class MatrixSystem:
                     ptr += 1
                 else:
                     val = 0.0 + 0.0j
+                row.append(f"{val.real:6.2f}+({val.imag:6.2f}) ")
+            print("".join(row))
+        print()
+
+    def PrintMatrix2(self, matrix):
+        for i in range(self.M):
+            row = []
+            for j in range(self.M):
+                val = matrix[i][j]
                 row.append(f"{val.real:6.2f}+({val.imag:6.2f}) ")
             print("".join(row))
         print()
