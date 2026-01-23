@@ -44,7 +44,7 @@ class PrintToLogger:
 def handleLogging():
     os.makedirs("logs", exist_ok=True)
 
-    log_filename = datetime.now().strftime("logs/B_%Y-%m-%d_%H-%M-%S.log")
+    log_filename = datetime.now().strftime(f"logs/DEBUG_{sys.argv[1]}_{sys.argv[2]}_%Y-%m-%d_%H-%M-%S.log")
 
     logger = logging.getLogger("my_app")
     logger.setLevel(logging.INFO)
@@ -67,17 +67,17 @@ def handleLogging():
 
 handleLogging()
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--dimension", type=int, required=True)
-parser.add_argument("--phase", type=int, required=True)
-parser.add_argument("--kappa", type=float, required=False)
-parser.add_argument("--seed", type=int, required=False)
-parser.add_argument("--mode", required=True)
+# parser = argparse.ArgumentParser()
+# parser.add_argument("--dimension", type=int, required=False)
+# parser.add_argument("--phase", type=int, required=False)
+# parser.add_argument("--kappa", type=float, required=False)
+# parser.add_argument("--seed", type=int, required=False)
+# parser.add_argument("--mode", required=False)
 
 
-args = parser.parse_args()
+# args = parser.parse_args()
 
-print(f"mode: {args.mode}, dimension: {args.dimension}, phase: {args.phase}, kappa: {args.kappa}, seed: {args.seed}")
+#print(f"mode: {args.mode}, dimension: {args.dimension}, phase: {args.phase}, kappa: {args.kappa}, seed: {args.seed}")
 
 tstart = time.time()
 #sim = AerSimulator(method="statevector", device="GPU", cuStateVec_enable=True)
@@ -92,20 +92,22 @@ print(AerSimulator().available_devices())
 outfile_path = "./output.txt"
 
 # the choice of nq_phase affects the accuracy of QPE
-nq_phase = args.phase
-MM = args.dimension
+# nq_phase = args.phase
+# MM = args.dimension
+nq_phase = int(sys.argv[3])
+MM = int(sys.argv[1])
 
 # initialize the matrix equation, and prepare it for the quantum procedure
 print("Building system... ", end="")
 sys.stdout.flush()
 msystem = mp.MatrixSystem(M=MM, expand=False)
 
-if args.mode == "kappatest":
-    msystem.TestCaseInit_Kappa(D=MM, kappa_target=args.kappa, seed=args.seed)
-    msystem.PrepSystem()
-else:
-    msystem.RandInitSeed(D=args.dimenstion, seed=args.seed)
-    msystem.PrepSystem()
+# if args.mode == "kappatest":
+#     msystem.TestCaseInit_Kappa(D=MM, kappa_target=args.kappa, seed=args.seed)
+#     msystem.PrepSystem()
+# else:
+msystem.FileInitMatlab(A_file="./benchmarks/matrix_"+sys.argv[1]+"_"+sys.argv[2]+".dat", b_file="./benchmarks/rvec_"+sys.argv[1]+"_"+sys.argv[2]+".dat")
+msystem.PrepSystem()
 
 print(f"msystem.d is {msystem.d} and msystem.X is {msystem.X}")
 print("Done.")

@@ -306,30 +306,27 @@ class MatrixSystem:
             )
 
             for j in cols:
-                mag = np.random.uniform(0.1, 1.0)
-                phase = np.random.uniform(0.0, 2 * np.pi)
-                val = mag * np.exp(1j * phase)
+                x = 2.0 * (random.random() - 0.5)
+                y = 2.0 * (random.random() - 0.5)
+                A[i, j] = complex(x, 0)
+                A[j, i] = complex(x, 0)   # Hermitian symmetry
 
-                A[i, j] = val
-                A[j, i] = np.conj(val)  # Hermitian symmetry
 
         # Step 2: positive diagonal entries
         for i in range(D):
-            A[i, i] = np.sum(np.abs(A[i])) + 1.0
+            x = 2.0 * (random.random() - 0.5)
+            A[i, i] = complex(x, 0.0)
+
         print("A based on seed before k rescaling:")
         self.PrintMatrix2(A)
         # Step 3: spectral rescaling to target κ
         eigvals, eigvecs = np.linalg.eigh(A)
-        eigvals = np.clip(eigvals, 1e-8, None)
 
         eigvals_scaled = 1 + (eigvals - eigvals.min()) * (
             kappa_target - 1
         ) / (eigvals.max() - eigvals.min())
 
         A = eigvecs @ np.diag(eigvals_scaled) @ eigvecs.T
-
-        # Step 4: zero-out tiny entries
-        A[np.abs(A) < EPSILON] = 0.0
 
         # Enforce exact Hermiticity after cleanup
         A = 0.5 * (A + A.T)
@@ -348,7 +345,7 @@ class MatrixSystem:
         # Step 6: generate solution and RHS
         x_true = np.random.randn(D)
         b = A @ x_true
-
+        print("\nactual kappa: ",kappa_actual)
         self.A0_indices, self.A0_elements, self.b0 = self.dense_to_sparse(A, b)
         return {
             "A": A,
@@ -360,6 +357,32 @@ class MatrixSystem:
             "kappa_actual": kappa_actual,
             "eigenvalues": eigenvalues
         }
+
+    #Load matrix from matlab-style file
+    def FileInitMatlab(self, A_file: str = "./Updated/MS.txt", b_file: str = "./Updated/b0.txt"):
+        """Load A₀ and b₀ from text files."""
+        self.A0_indices.clear()
+        self.A0_elements.clear()
+        self.b0.clear()
+
+        with open(A_file, "r") as f:
+            lines = f.readlines()
+        j = -1
+        for line in lines:
+            v_str = line.split(",")
+            
+            self.A0_indices.append([])
+            self.A0_elements.append([])
+            M  = len(v_str)
+            j += 1
+            for k in range(M):
+                value = complex(v_str[k])
+                self.A0_indices[j].append(k)
+                self.A0_elements[j].append(value)
+        with open(b_file, "r") as f:
+            for line in f:
+                self.b0.append(complex(line.strip()))
+
 
     def PrepSystem(self):
         """
@@ -484,7 +507,16 @@ class MatrixSystem:
 
         print("\nAverage Relative Error:", np.mean(rel_errors))
 
+        sol_aligned_norm = sol_aligned / np.linalg.norm(sol_aligned)
+        sol_class_norm = sol_class / np.linalg.norm(sol_class)
+        tvd = 0.5 * sum(abs(sol_aligned_norm[x] - sol_class_norm[x]) for x in range(self.M))
+        print("\nTVD:", tvd)
 
+        #innerproduct = np.dot(sol_aligned_norm, sol_class_norm)
+        #print("\n inner product:", innerproduct)
+        #fidelity =  sum( math.pow(sol_aligned_norm[x]  * sol_class_norm[x], 0.5) for x in range(self.M))
+        #print("\n fidelity:", fidelity)
+        
     def PrintMatrix(self):
         """
         Print the original matrix A0 (M × M) and expanded matrix A (N × N)

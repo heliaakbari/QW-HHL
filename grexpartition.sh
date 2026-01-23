@@ -10,8 +10,9 @@
 module load arch/avx512 gcc/13.2.0 python/3.12
 source ~/my_qiskit_env/bin/activate
 
-KAPPAS=(5 10 15)
-SEEDS=(1 42)
+KAPPAS=(4 8 16 32 64 128)
+
+SEEDS=(1 2 3 4)
 
 for seed in "${SEEDS[@]}"; do
     for kappa in "${KAPPAS[@]}"; do
