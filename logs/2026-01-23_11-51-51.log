@@ -1,0 +1,38 @@
+2026-01-23 11:51:51,836 - INFO - mode: matlabinit, dimension: 2, phase: 10, kappa: None, seed: None
+2026-01-23 11:51:51,838 - INFO - Simulator:
+2026-01-23 11:51:51,839 - INFO - AerSimulator('aer_simulator_statevector')
+2026-01-23 11:51:51,839 - INFO - ('CPU',)
+2026-01-23 11:51:51,839 - INFO - Building system...
+2026-01-23 11:51:51,841 - INFO - msystem.d is 0.7696238083058117 and msystem.X is 3.0784952333232467
+2026-01-23 11:51:51,841 - INFO - Done.
+2026-01-23 11:51:51,841 - INFO - A0 (original matrix):
+2026-01-23 11:51:51,841 - INFO - 1.09+(  0.00)   0.02+(  0.00)
+2026-01-23 11:51:51,841 - INFO - 0.02+(  0.00)   0.54+(  0.00)
+2026-01-23 11:51:51,841 - INFO - A (expanded/normalized system matrix):
+2026-01-23 11:51:51,841 - INFO - 1.54+(  0.00)   0.01+(  0.00)
+2026-01-23 11:51:51,841 - INFO - 0.01+(  0.00)   1.15+(  0.00)
+2026-01-23 11:51:51,841 - INFO - b =
+2026-01-23 11:51:51,841 - INFO - [(0.7071067811865475+0j), (0.7071067811865475+0j)]
+2026-01-23 11:51:51,841 - INFO - Initializing...
+2026-01-23 11:51:51,858 - INFO - T0 built
+2026-01-23 11:51:51,884 - INFO - W built
+2026-01-23 11:52:08,064 - INFO - QPE built
+2026-01-23 11:52:08,065 - INFO - 0.003301360574713574
+2026-01-23 11:52:08,592 - INFO - Rc built
+2026-01-23 11:52:08,592 - INFO - Finished initialization.
+2026-01-23 11:52:08,592 - INFO - Building circuit...
+2026-01-23 11:52:08,593 - INFO - T0 added
+2026-01-23 11:52:08,593 - INFO - QPE added
+2026-01-23 11:52:08,593 - INFO - Rc added
+2026-01-23 11:55:14,997 - INFO - QPE* added
+2026-01-23 11:55:15,007 - INFO - T0* added
+2026-01-23 11:55:15,007 - INFO - Finished building circuit.
+2026-01-23 11:55:15,007 - INFO - Transpiling...
+2026-01-23 12:07:03,353 - INFO - Done.
+2026-01-23 12:07:17,284 - INFO - Size of transpiled circuit:
+2026-01-23 12:07:17,286 - INFO - 7235203
+2026-01-23 12:07:42,532 - INFO - Depth of transpiled circuit:
+2026-01-23 12:07:42,536 - INFO - 7128650
+2026-01-23 12:07:42,537 - INFO - Number of qubits in circuit:
+2026-01-23 12:07:42,539 - INFO - 17
+2026-01-23 12:07:42,542 - INFO - Running circuit...
