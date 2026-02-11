@@ -1,0 +1,17 @@
+git clone https://github.com/heliaakbari/QW-HHL.git
+
+git checkout Grex
+
+cd QW-HHL
+
+module load arch/avx512 gcc/13.2.0 python/3.12
+
+virtualenv ~/my_qiskit_env
+
+source ~/my_qiskit_env/bin/activate
+
+pip install --upgrade pip
+
+pip install qiskit cirq numpy qiskit-aer psutil
+
+deactivate
