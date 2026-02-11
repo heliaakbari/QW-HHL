@@ -1,8 +1,5 @@
-# QMES
-A quantum matrix equation solver
+# QW-HHL
+A quantum-walk-modified HHL procedure
 
-## Book
-A.W.Harrow,A.Hassidim,andS.Lloyd,“Quantum algorithm for linear systems of equations,”Phys.Rev.Lett.,vol.103,no.15,p.150502,Oct. 2009,DOI:10.1103/PhysRevLett.103.150502.
-
-## Article Location
-https://arxiv.org/pdf/2112.02600.pdf
+## Article
+C. D. Phillips, H. Akbari, and V.I. Okhmatovski, ``A Quantum Computer Amenable Sparse Matrix Equation Solver,'' arXiv:2112.02600 [quant-ph], 2022. [Online]. Available: https://arxiv.org/abs/2112.02600
