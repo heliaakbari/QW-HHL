@@ -104,8 +104,7 @@ if args.mode == "kappatest":
     msystem.TestCaseInit_Kappa(D=MM, kappa_target=args.kappa, seed=args.seed)
     msystem.PrepSystem()
 else:
-    msystem.RandInitSeed(D=args.dimenstion, seed=args.seed)
-    msystem.PrepSystem()
+    msystem.FullyQuantumInit()
 
 print(f"msystem.d is {msystem.d} and msystem.X is {msystem.X}")
 print("Done.")
@@ -224,7 +223,7 @@ except Exception:
     statevector = result.get_statevector()
 
 print("Done.")
-#qa.PrintStatevector(statevector, nq_phase, msystem)
+qa.PrintStatevector(statevector, nq_phase, msystem)
 # process the results: extract the solution and compare with a classical solution
 # can also check QPE by removing Rc and QPE inverses in the main circuit, and uncommenting below
 #qa.PrintStatevector(statevector,nq_phase,msystem)

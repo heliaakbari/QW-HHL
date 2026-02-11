@@ -10,20 +10,15 @@
 module load arch/avx512 gcc/13.2.0 python/3.12
 source ~/my_qiskit_env/bin/activate
 
-KAPPAS=(4 8 16 32 64 128)
-
-SEEDS=(1 2 3 4)
-
-for seed in "${SEEDS[@]}"; do
-    for kappa in "${KAPPAS[@]}"; do
-        echo "Running kappa=$kappa seed=$seed"
-        python Updated/MainSim.py \
-        --mode kappatest \
-        --dimension 2 \
-        --phase 2 \
-        --kappa "$kappa" \
-        --seed "$seed"
-  done
+for m in 2 4
+do
+    for p in {1..6}
+    do
+        for q in {2..3}
+        do
+            python Updated/MainSim.py ${m} ${p} ${q}
+        done
+    done
 done
 
 deactivate

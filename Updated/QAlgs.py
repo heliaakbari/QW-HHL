@@ -7,10 +7,12 @@ EPSILON=1e-10
 
 def PrintStatevector(sv, nq_phase, msystem):
     N_phase = int(2**nq_phase + EPSILON)
-    N_work  = int(2**max(1, msystem.n - 1) + EPSILON)
+    N_work  = int(2**max(1, msystem.n - 1) + EPSILON) 
+    N_work = 0
     N_main  = int(2**msystem.n + EPSILON)
 
-    nq_work = max(1, msystem.n - 1)
+    nq_work = max(1, msystem.n - 1) 
+    nq_work = 0
 
     f_a = "{:01b}"
     f_w = "{:0%db}" % nq_work
@@ -18,13 +20,11 @@ def PrintStatevector(sv, nq_phase, msystem):
     f_p = "{:0%db}" % nq_phase
 
     print(
-        "|%s>|%s>|%s>|%s>|%s>|%s>|%s>|%s>" % (
+        "|%s>|%s>|%s>|%s>|%s>|%s>" % (
             "rp".ljust(max(2, nq_phase)),
             "r1".ljust(max(2, msystem.n)),
-            "r1w".ljust(max(3, nq_work)),
             "r1a",
             "r2".ljust(max(2, msystem.n)),
-            "r2w".ljust(max(3, nq_work)),
             "r2a",
             "HHL"
         )
@@ -35,36 +35,23 @@ def PrintStatevector(sv, nq_phase, msystem):
         s_p = f_p.format(c_p)
         for c_r1 in range(N_main):
             s_r1 = f_m.format(c_r1)
-            for c_r1w in range(N_work):
-                s_r1w = f_w.format(c_r1w)
-                for c_r1a in range(2):
-                    s_r1a = f_a.format(c_r1a)
-                    for c_r2 in range(N_main):
-                        s_r2 = f_m.format(c_r2)
-                        for c_r2w in range(N_work):
-                            s_r2w = f_w.format(c_r2w)
-                            for c_r2a in range(2):
-                                s_r2a = f_a.format(c_r2a)
-                                for c_hhl in range(2):
-                                    s_hhl = f_a.format(c_hhl)
-                                    amp = sv[c_tot]
-                                    if abs(amp.real) > 0.001 :
-                                        print(
-                                            "|%s>|%s>|%s>|%s>|%s>|%s>|%s>|%s>   % .6f  % .6fi" %
-                                            (
-                                                s_p.ljust(max(2, nq_phase)),
-                                                s_r1.ljust(max(2, msystem.n)),
-                                                s_r1w.ljust(max(3, nq_work)),
-                                                s_r1a,
-                                                s_r2.ljust(max(2, msystem.n)),
-                                                s_r2w.ljust(max(3, nq_work)),
-                                                s_r2a,
-                                                s_hhl,
-                                                amp.real,
-                                                amp.imag
-                                            )
-                                        )
-                                    c_tot += 1
+            for c_r1a in range(2):
+                s_r1a = f_a.format(c_r1a)
+                for c_r2 in range(N_main):
+                    s_r2 = f_m.format(c_r2)
+                    for c_r2a in range(2):
+                        s_r2a = f_a.format(c_r2a)
+                        for c_hhl in range(2):
+                            s_hhl = f_a.format(c_hhl)
+                            amp = sv[c_tot]
+                            print(
+                                "%.6f+%.6fi" %
+                                (
+                                    amp.real,
+                                    amp.imag
+                                )
+                            )
+                            c_tot += 1
 
 def CheckQPE(sv, nq_phase, msystem):
     N_phase = int(2**nq_phase + EPSILON)

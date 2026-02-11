@@ -160,6 +160,7 @@ class MatrixSystem:
         self.d=3.0
         self.X=2.0+EPSILON 
         self.C = 0
+        print(self.A0_elements, self.A_elements, self.b, sep="\n")
 
     def FullyQuantumExtendedInit(self):
         
